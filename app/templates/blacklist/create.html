@@ -1,0 +1,7 @@
+{% extends 'admin/model/create.html' %} 
+
+{% block tail %}
+{{ super() }}
+<script src="{{ url_for('static', filename='getaddress.js') }}"></script>
+{{ lib.form_js() }}
+{% endblock %}

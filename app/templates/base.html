@@ -1,0 +1,18 @@
+{% extends 'admin/base.html' %}
+
+{% block main_menu %}
+<div style="display: flex;justify-content:space-between;width: 90%;">
+    <ul class="nav navbar-nav">
+        {{ layout.menu() }}
+    </ul>
+    <ul class="nav navbar-nav">
+        <li>
+            <a class="nav-link" href="/admin/logout">ログアウト</a>
+        </li>
+        <li>
+            <span class="nav-link">{{current_user.name}}</span>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
