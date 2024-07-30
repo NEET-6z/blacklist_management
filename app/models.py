@@ -13,7 +13,7 @@ class BlackList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     address = db.Column(db.String(255))
-    reason = db.Column(db.String(255))
+    reason = db.Column(db.Text(255),default="",nullable=False)
     level = db.Column(db.Integer)
     state = db.Column(db.Boolean)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)

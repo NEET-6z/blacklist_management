@@ -1,7 +1,12 @@
 {% extends 'admin/model/edit.html' %} 
 
+
+{% block edit_form %}
+	<h1>ここは編集フォームです</h1>
+	{{ super() }}
+{% endblock %}
+
 {% block tail %}
-{{ super() }}
-<script src="{{ url_for('static', filename='getaddress.js') }}"></script>
-{{ lib.form_js() }}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='getaddress.js') }}"></script>
 {% endblock %}

@@ -4,6 +4,7 @@ from dotenv import dotenv_values, load_dotenv
 from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.menu import MenuLink
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
@@ -14,10 +15,11 @@ config = dotenv_values()
 
 login_manager = LoginManager() 
 
+
+
+from app.admin_index import MyAdminIndexView
 from app.models import BlackList, Manager
-from app.views.admin_index import MyAdminIndexView
-from app.views.blacklist import BlackListModelView
-from app.views.manager import ManagerModelView
+from app.views import BlackListModelView, ManagerModelView
 
 
 def create_app():
@@ -33,10 +35,11 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'admin.login_view'
     
+   
+    
     with app.app_context():
         db.create_all()
 
-    # adminアカウントを作成
     with app.app_context():    
         admin_user = Manager.query.filter_by(name='admin').first()
         if admin_user is None:
@@ -51,9 +54,10 @@ def create_app():
                 db.session.add(admin_user)
                 db.session.commit()
                 print("Admin user created.")
-
+    
     # indexviewにMyAdminIndexViewを指定
-    admin = Admin(app, name="管理画面だぇ", template_mode="bootstrap4", index_view=MyAdminIndexView(name="ホーム"),base_template="/base.html")
+    admin = Admin(app, name="管理画面だぇ", template_mode="bootstrap4", index_view=MyAdminIndexView(name="ホーム"))
     admin.add_view(BlackListModelView(BlackList, db.session,"ブラックリスト"))
     admin.add_view(ManagerModelView(Manager,db.session,"管理者"))
+    admin.add_link(MenuLink(name="ログアウト",url="/admin/logout"))
     return app

@@ -3,8 +3,7 @@ from flask_admin import expose
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
-from wtforms import (BooleanField, PasswordField, RadioField, SelectField,
-                     StringField, SubmitField, ValidationError)
+from wtforms import StringField
 
 from app.db import db
 from app.models import BlackList
@@ -15,7 +14,8 @@ class BlackListModelView(ModelView):
     column_display_pk = True    
     
     # address列を非表示に
-    column_exclude_list = ["address"]
+    column_list = ["name","address","reason","level","state","manager"]
+    
     
     # 検索可能な列
     column_searchable_list = ["id","name","address","reason"]
@@ -44,14 +44,15 @@ class BlackListModelView(ModelView):
     # 詳細ビューを有効化
     can_view_details=True
     
-    
-    form_extra_fields = {        
+    # カスタムフィールド
+    form_extra_fields = {
         "postcode": StringField(label="郵便番号")
     }
 
     
     form_columns = [
         "name",
+        "reason",
         "postcode",
         "address",
         "level",
@@ -63,6 +64,9 @@ class BlackListModelView(ModelView):
         "name":{
             "placeholder":"田中太郎",
         },
+        "reason":{
+            "rows": 10,
+        }
 
     }
     column_descriptions = {
@@ -74,6 +78,8 @@ class BlackListModelView(ModelView):
         "manager": "担当者を追加してください"
     }
     
+    
+    # 郵便番号から住所を返す簡易的なapi
     @expose("/get_address/<string:postcode>/", methods=["GET"])
     def get_address(self, postcode):
         from jusho import Jusho
@@ -83,7 +89,8 @@ class BlackListModelView(ModelView):
             return res
         else:
             return ""
-        
+    
+    
     create_template = "/blacklist/create.html"
     edit_template = "/blacklist/edit.html"
         
@@ -100,11 +107,13 @@ class BlackListModelView(ModelView):
         return current_user.role>=2
     
     
-    @action('update_dones', 'Update Dones', '一括 done ok?')
-    def action_update_due_dates(self, ids):
+    @action('update', 'Update', '一括 True ok?')
+    def action_update_state(self, ids):
         try:
+	        #チェックが押されたレコードすべてを取得
             query = BlackList.query.filter(BlackList.id.in_(ids))
             for staff in query.all():
+	            # 各レコードの、stateをTrueに
                 staff.state = True
             db.session.commit()
             flash(f'Successfully')
@@ -121,5 +130,48 @@ class BlackListModelView(ModelView):
     def inaccessible_callback(self, name, **kwargs):
         return redirect(url_for('admin.login_view', next=request.url))
     
+
+class ManagerModelView(ModelView):
+    # idも表示させるようにする
+    column_display_pk = True    
+    
+    # password列を非表示に
+    column_exclude_list = ["password_hash"]
+    
+    form_create_rules = (
+        "name",
+        "email",
+        "password_hash",
+        "role"
+    )
+    form_edit_rules = (
+        "name",
+        "email",
+        "role"
+    )
+
+    
+    def on_model_change(self, form, model, is_created):
+        if(is_created):    
+            if form.password_hash.data:
+                model.set_password(form.password_hash.data) 
+                       
     
     
+    
+    @property
+    def can_edit(self):
+        return current_user.role>=3
+    @property
+    def can_create(self):
+        return current_user.role>=3
+    @property
+    def can_delete(self):
+        return current_user.role>=3
+    
+    
+    def is_accessible(self):
+        return current_user.is_authenticated
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('admin.login_view', next=request.url))
